@@ -6,6 +6,16 @@ export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
     exclude: ['lucide-react'],
+    include: ['@monaco-editor/react', 'monaco-editor'],
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'monaco-editor': ['monaco-editor', '@monaco-editor/react'],
+        },
+      },
+    },
   },
   server: {
     proxy: {
@@ -14,5 +24,8 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  worker: {
+    format: 'es',
   },
 });
