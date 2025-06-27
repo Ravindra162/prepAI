@@ -27,7 +27,7 @@ export const Register: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await register(formData.email, formData.password, formData.name);
+      await register(formData.name, formData.email, formData.password);
       navigate('/');
     } catch (error) {
       // Error is handled by the auth context
