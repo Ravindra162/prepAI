@@ -35,15 +35,16 @@ export const sendEmail = async (to, subject, html, userId = null) => {
 
     const info = await transporter.sendMail(mailOptions);
     
-    // Log email
-    await pool.query(
+    // Log email and return the log ID
+    const logResult = await pool.query(
       `INSERT INTO email_logs (user_id, recipient_email, subject, content, status, sent_at, message_id)
-       VALUES ($1, $2, $3, $4, 'sent', NOW(), $5)`,
+       VALUES ($1, $2, $3, $4, 'sent', NOW(), $5)
+       RETURNING id`,
       [userId, to, subject, html, info.messageId]
     );
 
     console.log('✅ Email sent:', info.messageId);
-    return info;
+    return logResult.rows[0].id;
   } catch (error) {
     console.error('❌ Email send error:', error);
     

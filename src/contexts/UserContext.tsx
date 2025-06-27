@@ -60,27 +60,27 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const refreshUserData = async () => {
     try {
-      const [profileResponse, preferencesResponse, subscriptionResponse] = await Promise.all([
+      const [profileResponse, preferencesResponse] = await Promise.all([
         authAPI.getProfile().catch(() => null),
         emailAPI.getEmailPreferences().catch(() => ({ 
           emailNotifications: false, 
           dailyProblems: 3, 
           preferredTime: '09:00', 
           selectedSheets: [] 
-        })),
-        emailAPI.getSubscriptionStatus().catch(() => ({ isSubscribed: false }))
+        }))
       ]);
 
       if (!profileResponse) {
         throw new Error('Failed to get user profile');
       }
 
+      // Use emailNotifications as the single source of truth for subscription status
       setUser({
         id: profileResponse.id,
         name: profileResponse.name,
         email: profileResponse.email,
         joinDate: profileResponse.joinDate || new Date().toISOString(),
-        isSubscribed: subscriptionResponse.isSubscribed,
+        isSubscribed: preferencesResponse.emailNotifications,
         streak: profileResponse.streak || 0,
         totalSolved: profileResponse.totalSolved || 0,
         role: profileResponse.role || 'user',
@@ -159,26 +159,44 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         await emailAPI.updateSubscription(newPreferences.emailNotifications!);
       }
 
-      // If other preferences are being updated, use the subscribe API
-      if (newPreferences.dailyProblems || newPreferences.preferredTime || newPreferences.selectedSheets) {
-        await emailAPI.subscribe(
-          newPreferences.selectedSheets || user.preferences.selectedSheets,
-          newPreferences.dailyProblems || user.preferences.dailyProblems,
-          newPreferences.preferredTime || user.preferences.preferredTime
-        );
+      // For other preferences, use the appropriate API based on subscription status
+      const otherPrefs = Object.fromEntries(
+        Object.entries(newPreferences).filter(([key]) => key !== 'emailNotifications')
+      );
+
+      if (Object.keys(otherPrefs).length > 0) {
+        const currentSubscriptionStatus = newPreferences.emailNotifications ?? user.preferences.emailNotifications;
+        
+        if (currentSubscriptionStatus) {
+          // If subscribed, use the subscribe API to update all preferences
+          await emailAPI.subscribe(
+            newPreferences.selectedSheets || user.preferences.selectedSheets,
+            newPreferences.dailyProblems || user.preferences.dailyProblems,
+            newPreferences.preferredTime || user.preferences.preferredTime
+          );
+        } else {
+          // If not subscribed, use the preferences API to save for later
+          await emailAPI.updatePreferences(otherPrefs);
+        }
       }
 
-      // Update local state
+      // Update local state with consistent subscription status
+      const updatedEmailNotifications = newPreferences.emailNotifications ?? user.preferences.emailNotifications;
+      
       setUser({
         ...user,
         preferences: {
           ...user.preferences,
           ...newPreferences
         },
-        isSubscribed: newPreferences.emailNotifications ?? user.isSubscribed
+        isSubscribed: updatedEmailNotifications
       });
 
-      toast.success('Preferences updated successfully!');
+      // Refresh user data from server to ensure consistency after a delay
+      setTimeout(() => {
+        refreshUserData().catch(console.error);
+      }, 300);
+
     } catch (error: any) {
       console.error('Update preferences error:', error);
       const errorMessage = error.response?.data?.error || 'Failed to update preferences';
@@ -195,21 +213,17 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     try {
       if (isSubscribed) {
-        // Check if user has selected sheets first
-        if (!user.preferences.selectedSheets || user.preferences.selectedSheets.length === 0) {
-          toast.error('Please select at least one problem sheet before subscribing');
-          return;
-        }
-
+        // For subscribing, use current user preferences for selected sheets
         await emailAPI.subscribe(
-          user.preferences.selectedSheets,
+          user.preferences.selectedSheets.length > 0 ? user.preferences.selectedSheets : [],
           user.preferences.dailyProblems,
           user.preferences.preferredTime
         );
       } else {
-        await emailAPI.unsubscribe();
+        await emailAPI.updateSubscription(false);
       }
 
+      // Update local state immediately with consistent subscription status
       setUser({
         ...user,
         isSubscribed,
@@ -221,6 +235,12 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       const action = isSubscribed ? 'subscribed to' : 'unsubscribed from';
       toast.success(`Successfully ${action} daily emails!`);
+
+      // Refresh user data from server after a short delay to ensure consistency
+      setTimeout(() => {
+        refreshUserData().catch(console.error);
+      }, 300);
+
     } catch (error: any) {
       console.error('Update subscription error:', error);
       const errorMessage = error.response?.data?.error || 'Failed to update subscription';

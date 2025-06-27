@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { UserProvider } from './contexts/UserContext';
@@ -15,7 +15,7 @@ import { Profile } from './pages/Profile';
 import { Unsubscribe } from './pages/Unsubscribe';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminUsers } from './pages/admin/AdminUsers';
-import { AdminSheets } from './pages/admin/AdminSheets';
+import { AdminEmailLogs } from './pages/admin/AdminEmailLogs';
 import { AdminAnalytics } from './pages/admin/AdminAnalytics';
 
 function App() {
@@ -76,7 +76,7 @@ function App() {
               }>
                 <Route index element={<AdminDashboard />} />
                 <Route path="users" element={<AdminUsers />} />
-                <Route path="sheets" element={<AdminSheets />} />
+                <Route path="email-logs" element={<AdminEmailLogs />} />
                 <Route path="analytics" element={<AdminAnalytics />} />
               </Route>
             </Routes>

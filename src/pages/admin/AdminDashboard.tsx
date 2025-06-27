@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, BookOpen, Play, TrendingUp, Mail, AlertCircle } from 'lucide-react';
+import { Users, Mail, TrendingUp, AlertCircle } from 'lucide-react';
 import { AdminStatsCard } from '../../components/AdminStatsCard';
 import { AdminChart } from '../../components/AdminChart';
 import { RecentUsers } from '../../components/RecentUsers';
@@ -23,24 +23,24 @@ export const AdminDashboard: React.FC = () => {
           color="bg-gradient-to-r from-blue-500 to-blue-600"
         />
         <AdminStatsCard
-          title="Active Sheets"
-          value="12"
-          change="+2 this month"
-          icon={BookOpen}
+          title="Email Subscribers"
+          value="428"
+          change="+18.2%"
+          icon={Mail}
           color="bg-gradient-to-r from-green-500 to-green-600"
         />
         <AdminStatsCard
-          title="Code Executions"
-          value="8,432"
-          change="+23.1%"
-          icon={Play}
+          title="Emails Sent Today"
+          value="156"
+          change="Daily delivery"
+          icon={TrendingUp}
           color="bg-gradient-to-r from-purple-500 to-purple-600"
         />
         <AdminStatsCard
-          title="Emails Sent"
-          value="2,156"
-          change="+8.2%"
-          icon={Mail}
+          title="Email Success Rate"
+          value="98.5%"
+          change="+0.3%"
+          icon={AlertCircle}
           color="bg-gradient-to-r from-orange-500 to-red-500"
         />
       </div>

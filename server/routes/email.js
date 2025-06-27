@@ -2,6 +2,7 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import pool from '../config/database.js';
 import { sendEmail } from '../services/emailService.js';
+import { testEmailSending, checkAndSendImmediateEmail } from '../services/emailScheduler.js';
 
 const router = express.Router();
 
@@ -34,8 +35,15 @@ router.post('/subscribe', [
       [userId, dailyProblems, preferredTime, JSON.stringify(sheetIds)]
     );
 
-    res.json({ message: 'Successfully subscribed to daily emails' });
     console.log(`✅ User ${req.user.email || req.user.id} subscribed to daily emails`);
+
+    // Check if we should send an immediate email
+    const immediateSent = await checkAndSendImmediateEmail(userId);
+    
+    res.json({ 
+      message: 'Successfully subscribed to daily emails',
+      immediateSent: immediateSent
+    });
   } catch (error) {
     console.error('Email subscription error:', error);
     res.status(500).json({ error: 'Failed to subscribe to emails' });
@@ -83,11 +91,20 @@ router.get('/preferences', async (req, res) => {
 
     const prefs = result.rows[0];
     
+    // Safely parse selected_sheets JSON
+    let selectedSheets = [];
+    try {
+      selectedSheets = JSON.parse(prefs.selected_sheets || '[]');
+    } catch (error) {
+      console.error('Failed to parse selected_sheets JSON for user:', userId, 'Data:', prefs.selected_sheets);
+      selectedSheets = [];
+    }
+    
     res.json({
       emailNotifications: prefs.email_notifications,
       dailyProblems: prefs.daily_problems,
       preferredTime: prefs.preferred_time,
-      selectedSheets: JSON.parse(prefs.selected_sheets || '[]')
+      selectedSheets: selectedSheets
     });
   } catch (error) {
     console.error('Get email preferences error:', error);
@@ -160,6 +177,65 @@ router.get('/subscription-status', async (req, res) => {
   }
 });
 
+// Update preferences only (without changing subscription status)
+router.put('/preferences', [
+  body('dailyProblems').optional().isInt({ min: 1, max: 10 }),
+  body('preferredTime').optional().matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+  body('selectedSheets').optional().isArray()
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { dailyProblems, preferredTime, selectedSheets } = req.body;
+    const userId = req.user.id;
+
+    // Get current preferences first
+    const current = await pool.query(
+      'SELECT * FROM user_preferences WHERE user_id = $1',
+      [userId]
+    );
+
+    // Prepare values with defaults
+    const currentData = current.rows[0] || {};
+    const newDailyProblems = dailyProblems !== undefined ? dailyProblems : (currentData.daily_problems || 3);
+    const newPreferredTime = preferredTime !== undefined ? preferredTime : (currentData.preferred_time || '09:00');
+    const newSelectedSheets = selectedSheets !== undefined ? JSON.stringify(selectedSheets) : (currentData.selected_sheets || '[]');
+    const currentEmailNotifications = currentData.email_notifications || false;
+
+    // Insert or update preferences
+    await pool.query(
+      `INSERT INTO user_preferences (user_id, email_notifications, daily_problems, preferred_time, selected_sheets, updated_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())
+       ON CONFLICT (user_id)
+       DO UPDATE SET 
+         daily_problems = $3,
+         preferred_time = $4,
+         selected_sheets = $5,
+         updated_at = NOW()`,
+      [userId, currentEmailNotifications, newDailyProblems, newPreferredTime, newSelectedSheets]
+    );
+
+    console.log(`✅ User ${req.user.email || req.user.id} updated preferences`);
+
+    // Check if we should send an immediate email (only if user is subscribed)
+    let immediateSent = false;
+    if (currentEmailNotifications) {
+      immediateSent = await checkAndSendImmediateEmail(userId);
+    }
+
+    res.json({ 
+      message: 'Preferences updated successfully',
+      immediateSent: immediateSent
+    });
+  } catch (error) {
+    console.error('Update preferences error:', error);
+    res.status(500).json({ error: 'Failed to update preferences' });
+  }
+});
+
 // Update subscription status only
 router.put('/subscription', async (req, res) => {
   try {
@@ -170,10 +246,10 @@ router.put('/subscription', async (req, res) => {
       return res.status(400).json({ error: 'emailNotifications must be a boolean value' });
     }
 
-    // Update or create user preferences with subscription status
+    // Update or create user preferences with subscription status, preserving other fields
     await pool.query(
-      `INSERT INTO user_preferences (user_id, email_notifications, updated_at)
-       VALUES ($1, $2, NOW())
+      `INSERT INTO user_preferences (user_id, email_notifications, daily_problems, preferred_time, selected_sheets, updated_at)
+       VALUES ($1, $2, 3, '09:00', '[]', NOW())
        ON CONFLICT (user_id)
        DO UPDATE SET 
          email_notifications = $2,
@@ -181,10 +257,19 @@ router.put('/subscription', async (req, res) => {
       [userId, emailNotifications]
     );
 
+    console.log(`✅ User ${req.user.email || req.user.id} ${emailNotifications ? 'subscribed to' : 'unsubscribed from'} daily emails`);
+
+    // Check if we should send an immediate email (only if subscribing)
+    let immediateSent = false;
+    if (emailNotifications) {
+      immediateSent = await checkAndSendImmediateEmail(userId);
+    }
+
     const action = emailNotifications ? 'subscribed to' : 'unsubscribed from';
     res.json({ 
       message: `Successfully ${action} daily emails`,
-      isSubscribed: emailNotifications
+      isSubscribed: emailNotifications,
+      immediateSent: immediateSent
     });
   } catch (error) {
     console.error('Update subscription error:', error);
@@ -223,6 +308,93 @@ router.get('/test-subscriptions', async (req, res) => {
   } catch (error) {
     console.error('Test subscriptions error:', error);
     res.status(500).json({ error: 'Failed to get subscription test data' });
+  }
+});
+
+// Test daily email sending (admin only)
+router.post('/test-daily-emails', async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    await testEmailSending();
+
+    res.json({ 
+      message: 'Daily email test triggered successfully',
+      note: 'Check server logs for details'
+    });
+  } catch (error) {
+    console.error('Test daily emails error:', error);
+    res.status(500).json({ error: 'Failed to test daily emails' });
+  }
+});
+
+// Clear sent problems history (fresh start)
+router.post('/clear-history', async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Delete all sent problems for this user
+    const deleteResult = await pool.query(
+      'DELETE FROM sent_problems WHERE user_id = $1',
+      [userId]
+    );
+
+    // Update the last_history_cleared timestamp
+    await pool.query(
+      `UPDATE user_preferences 
+       SET last_history_cleared = NOW(), updated_at = NOW()
+       WHERE user_id = $1`,
+      [userId]
+    );
+
+    console.log(`🗑️ Cleared ${deleteResult.rowCount} sent problems for user ${req.user.email || userId}`);
+    
+    res.json({ 
+      message: 'Problem history cleared successfully',
+      clearedCount: deleteResult.rowCount
+    });
+  } catch (error) {
+    console.error('Clear history error:', error);
+    res.status(500).json({ error: 'Failed to clear problem history' });
+  }
+});
+
+// Get sent problems statistics
+router.get('/sent-stats', async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const statsResult = await pool.query(
+      `SELECT 
+         COUNT(*) as total_sent,
+         COUNT(DISTINCT problem_id) as unique_problems,
+         MIN(sent_at) as first_sent,
+         MAX(sent_at) as last_sent
+       FROM sent_problems 
+       WHERE user_id = $1`,
+      [userId]
+    );
+
+    const prefsResult = await pool.query(
+      'SELECT last_history_cleared FROM user_preferences WHERE user_id = $1',
+      [userId]
+    );
+
+    const stats = statsResult.rows[0];
+    const lastCleared = prefsResult.rows[0]?.last_history_cleared;
+
+    res.json({
+      totalSent: parseInt(stats.total_sent),
+      uniqueProblems: parseInt(stats.unique_problems),
+      firstSent: stats.first_sent,
+      lastSent: stats.last_sent,
+      lastHistoryCleared: lastCleared
+    });
+  } catch (error) {
+    console.error('Get sent stats error:', error);
+    res.status(500).json({ error: 'Failed to get sent statistics' });
   }
 });
 

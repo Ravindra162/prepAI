@@ -72,6 +72,15 @@ export const emailAPI = {
     return response.data;
   },
   
+  updatePreferences: async (preferences: { 
+    dailyProblems?: number; 
+    preferredTime?: string; 
+    selectedSheets?: string[] 
+  }) => {
+    const response = await apiClient.put('/email/preferences', preferences);
+    return response.data;
+  },
+  
   getSubscriptionStatus: async () => {
     const response = await apiClient.get('/email/subscription-status');
     return response.data;
@@ -79,6 +88,16 @@ export const emailAPI = {
   
   getEmailPreferences: async () => {
     const response = await apiClient.get('/email/preferences');
+    return response.data;
+  },
+
+  clearProblemHistory: async () => {
+    const response = await apiClient.post('/email/clear-history');
+    return response.data;
+  },
+
+  getSentStats: async () => {
+    const response = await apiClient.get('/email/sent-stats');
     return response.data;
   }
 };

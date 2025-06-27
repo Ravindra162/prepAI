@@ -146,6 +146,56 @@ router.patch('/users/:id/status', async (req, res) => {
   }
 });
 
+// Get users with email preferences
+router.get('/users-with-preferences', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        u.id,
+        u.name,
+        u.email,
+        u.is_active,
+        u.created_at,
+        u.last_login,
+        COALESCE(up.email_notifications, false) as email_notifications,
+        COALESCE(up.daily_problems, 3) as daily_problems,
+        COALESCE(up.preferred_time, '09:00') as preferred_time,
+        CASE 
+          WHEN up.selected_sheets IS NOT NULL AND up.selected_sheets != '[]' AND up.selected_sheets != 'null'
+          THEN up.selected_sheets::text
+          ELSE '[]'
+        END as selected_sheets_raw
+      FROM users u
+      LEFT JOIN user_preferences up ON u.id = up.user_id
+      WHERE u.role = 'user'
+      ORDER BY u.created_at DESC
+    `);
+
+    // Parse selected_sheets for each user
+    const users = result.rows.map(user => {
+      let selectedSheets = [];
+      try {
+        if (user.selected_sheets_raw && user.selected_sheets_raw !== '[]' && user.selected_sheets_raw !== 'null') {
+          selectedSheets = JSON.parse(user.selected_sheets_raw);
+        }
+      } catch (error) {
+        console.error('Failed to parse selected_sheets for user:', user.id, error);
+        selectedSheets = [];
+      }
+
+      return {
+        ...user,
+        selected_sheets: selectedSheets
+      };
+    });
+
+    res.json({ users });
+  } catch (error) {
+    console.error('Get users with preferences error:', error);
+    res.status(500).json({ error: 'Failed to get users with preferences' });
+  }
+});
+
 // Sheet management
 router.get('/sheets', async (req, res) => {
   try {

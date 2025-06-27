@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Shield, BarChart3, Users, BookOpen, Settings, LogOut } from 'lucide-react';
+import { Shield, BarChart3, Users, Settings, LogOut } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useUserContext } from '../contexts/UserContext';
 
@@ -11,7 +11,7 @@ export const AdminNavigation: React.FC = () => {
   const navItems = [
     { path: '/admin', icon: BarChart3, label: 'Dashboard' },
     { path: '/admin/users', icon: Users, label: 'Users' },
-    { path: '/admin/sheets', icon: BookOpen, label: 'Sheets' },
+    { path: '/admin/email-logs', icon: Settings, label: 'Email Logs' },
     { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
   ];
 
