@@ -32,7 +32,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Configure axios defaults
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://docvault-hzj4.onrender.com/api';
 axios.defaults.baseURL = API_BASE_URL;
 
 // Add token to requests

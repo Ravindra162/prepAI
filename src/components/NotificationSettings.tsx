@@ -368,7 +368,11 @@ export const NotificationSettings: React.FC = () => {
           <input
             type="time"
             value={settings.preferredTime}
-            onChange={(e) => setSettings({ ...settings, preferredTime: e.target.value })}
+            onChange={(e) => {
+              // Normalize time to HH:MM format (remove seconds if present)
+              const normalizedTime = e.target.value.split(':').slice(0, 2).join(':');
+              setSettings({ ...settings, preferredTime: normalizedTime });
+            }}
             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>

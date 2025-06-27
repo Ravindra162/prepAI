@@ -79,7 +79,7 @@ A comprehensive interview preparation platform with DSA practice sheets, live co
 
 The application will be available at:
 - Frontend: http://localhost:5173
-- Backend API: http://localhost:5000
+- Backend API: https://docvault-hzj4.onrender.com
 
 ### Demo Credentials
 

@@ -23,7 +23,7 @@ fi
 # Start the development servers
 echo "🔥 Starting development servers..."
 echo "   - Frontend: http://localhost:5173"
-echo "   - Backend API: http://localhost:5000"
+echo "   - Backend API: https://docvault-hzj4.onrender.com"
 echo "   - Email scheduler: Active"
 echo ""
 

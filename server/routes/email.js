@@ -10,7 +10,7 @@ const router = express.Router();
 router.post('/subscribe', [
   body('sheetIds').isArray().notEmpty(),
   body('dailyProblems').isInt({ min: 1, max: 10 }),
-  body('preferredTime').matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+  body('preferredTime').matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/)
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -20,6 +20,9 @@ router.post('/subscribe', [
 
     const { sheetIds, dailyProblems, preferredTime } = req.body;
     const userId = req.user.id;
+
+    // Normalize time format to HH:MM (remove seconds if present)
+    const normalizedTime = preferredTime.split(':').slice(0, 2).join(':');
 
     // Update user preferences
     await pool.query(
@@ -32,7 +35,7 @@ router.post('/subscribe', [
          preferred_time = $3,
          selected_sheets = $4,
          updated_at = NOW()`,
-      [userId, dailyProblems, preferredTime, JSON.stringify(sheetIds)]
+      [userId, dailyProblems, normalizedTime, JSON.stringify(sheetIds)]
     );
 
     console.log(`✅ User ${req.user.email || req.user.id} subscribed to daily emails`);
@@ -180,7 +183,7 @@ router.get('/subscription-status', async (req, res) => {
 // Update preferences only (without changing subscription status)
 router.put('/preferences', [
   body('dailyProblems').optional().isInt({ min: 1, max: 10 }),
-  body('preferredTime').optional().matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+  body('preferredTime').optional().matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/),
   body('selectedSheets').optional().isArray()
 ], async (req, res) => {
   try {
@@ -201,7 +204,9 @@ router.put('/preferences', [
     // Prepare values with defaults
     const currentData = current.rows[0] || {};
     const newDailyProblems = dailyProblems !== undefined ? dailyProblems : (currentData.daily_problems || 3);
-    const newPreferredTime = preferredTime !== undefined ? preferredTime : (currentData.preferred_time || '09:00');
+    // Normalize time format to HH:MM (remove seconds if present)
+    const rawTime = preferredTime !== undefined ? preferredTime : (currentData.preferred_time || '09:00');
+    const newPreferredTime = rawTime.split(':').slice(0, 2).join(':');
     const newSelectedSheets = selectedSheets !== undefined ? JSON.stringify(selectedSheets) : (currentData.selected_sheets || '[]');
     const currentEmailNotifications = currentData.email_notifications || false;
 
