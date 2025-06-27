@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, BookOpen, Play } from 'lucide-react';
+import { CheckCircle, BookOpen, Clock, Play } from 'lucide-react';
 import { progressAPI } from '../services/api';
 
 interface Activity {
@@ -25,7 +25,7 @@ export const RecentActivity: React.FC = () => {
         const recentActivities: Activity[] = [];
         
         if (overview.dailyProgress) {
-          overview.dailyProgress.slice(0, 4).forEach((day: any, index: number) => {
+          overview.dailyProgress.slice(0, 4).forEach((day, index) => {
             if (day.problems_solved > 0) {
               const date = new Date(day.date);
               const timeAgo = getTimeAgo(date);
@@ -131,6 +131,18 @@ export const RecentActivity: React.FC = () => {
             <p className="text-xs text-slate-400">Start solving problems to see your progress!</p>
           </div>
         )}
+      </div>
+    </div>
+  );
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-800 truncate">
+                {activity.title}
+              </p>
+              <p className="text-xs text-slate-500">{activity.sheet}</p>
+            </div>
+            <span className="text-xs text-slate-400">{activity.time}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

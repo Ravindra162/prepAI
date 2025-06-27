@@ -1,13 +1,22 @@
 import pool from '../config/database.js';
 
 const createTables = async () => {
+  let client;
   try {
     console.log('🔄 Running database migrations...');
+    
+    // Get a client from the pool
+    client = await pool.connect();
+    console.log('✅ Connected to database');
+
+    // Enable UUID extension (required for NeonDB)
+    await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
+    console.log('📦 UUID extension enabled');
 
     // Users table
-    await pool.query(`
+    await client.query(`
       CREATE TABLE IF NOT EXISTS users (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         email VARCHAR(255) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
         name VARCHAR(255) NOT NULL,
@@ -18,11 +27,12 @@ const createTables = async () => {
         last_login TIMESTAMP
       )
     `);
+    console.log('👥 Users table created/verified');
 
     // Sheets table
-    await pool.query(`
+    await client.query(`
       CREATE TABLE IF NOT EXISTS sheets (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         title VARCHAR(255) NOT NULL,
         description TEXT,
         difficulty VARCHAR(50) CHECK (difficulty IN ('beginner', 'intermediate', 'advanced')),
@@ -35,11 +45,12 @@ const createTables = async () => {
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `);
+    console.log('📋 Sheets table created/verified');
 
     // Problems table
-    await pool.query(`
+    await client.query(`
       CREATE TABLE IF NOT EXISTS problems (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         sheet_id UUID REFERENCES sheets(id) ON DELETE CASCADE,
         title VARCHAR(255) NOT NULL,
         step_no INTEGER DEFAULT 1,
@@ -60,11 +71,12 @@ const createTables = async () => {
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `);
+    console.log('❓ Problems table created/verified');
 
     // Problem progress table
-    await pool.query(`
+    await client.query(`
       CREATE TABLE IF NOT EXISTS problem_progress (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         user_id UUID REFERENCES users(id) ON DELETE CASCADE,
         problem_id UUID REFERENCES problems(id) ON DELETE CASCADE,
         sheet_id UUID REFERENCES sheets(id) ON DELETE CASCADE,
@@ -75,6 +87,7 @@ const createTables = async () => {
         UNIQUE(user_id, problem_id)
       )
     `);
+    console.log('📊 Problem progress table created/verified');
 
     // User preferences table
     await pool.query(`

@@ -132,7 +132,7 @@ export const ProblemCard: React.FC<ProblemCardProps> = ({ problem, index, sheetI
             <ExternalLink className="w-4 h-4" />
             <span>LeetCode</span>
           </a>
-          {problem.yt_link && (
+          {/* {problem.yt_link && (
             <a
               href={problem.yt_link}
               target="_blank"
@@ -142,7 +142,7 @@ export const ProblemCard: React.FC<ProblemCardProps> = ({ problem, index, sheetI
               <ExternalLink className="w-4 h-4" />
               <span>YouTube</span>
             </a>
-          )}
+          )} */}
         </div>
         <div className="flex items-center space-x-2 text-sm text-slate-600">
           <Clock className="w-4 h-4" />

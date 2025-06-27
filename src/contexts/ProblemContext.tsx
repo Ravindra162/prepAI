@@ -105,7 +105,7 @@ export const ProblemProvider: React.FC<{ children: ReactNode }> = ({ children })
                 solved: problem.isCompleted || false, // Use backend completion status
                 bookmarked: problem.user_status === 'bookmarked' || false // Use backend bookmark status
               })),
-              solved: 0, // This would be calculated from user progress
+              solved: problems.filter((p: any) => p.isCompleted).length, // Calculate from user progress
               estimatedTime: sheet.estimated_time || 'Not specified',
               author: sheet.author || 'Unknown',
               tags: Array.isArray(sheet.tags) ? sheet.tags : []

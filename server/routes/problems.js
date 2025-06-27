@@ -4,6 +4,50 @@ import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Get user stats (must be before /:id route)
+router.get('/my-stats', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get overall completion stats
+    const statsResult = await pool.query(
+      `SELECT 
+         COUNT(DISTINCT pp.problem_id) as total_attempted,
+         COUNT(DISTINCT CASE WHEN pp.status = 'solved' THEN pp.problem_id END) as total_completed,
+         COUNT(DISTINCT CASE WHEN pp.status = 'bookmarked' THEN pp.problem_id END) as total_bookmarked,
+         COUNT(DISTINCT pp.sheet_id) as sheets_started
+       FROM problem_progress pp
+       WHERE pp.user_id = $1`,
+      [userId]
+    );
+
+    // Get recent completions (last 7 days)
+    const recentResult = await pool.query(
+      `SELECT DATE(solved_at) as date, COUNT(*) as count
+       FROM problem_progress
+       WHERE user_id = $1 
+         AND status = 'solved' 
+         AND solved_at >= CURRENT_DATE - INTERVAL '7 days'
+       GROUP BY DATE(solved_at)
+       ORDER BY date DESC`,
+      [userId]
+    );
+
+    const stats = statsResult.rows[0];
+
+    res.json({
+      totalAttempted: parseInt(stats.total_attempted) || 0,
+      totalCompleted: parseInt(stats.total_completed) || 0,
+      totalBookmarked: parseInt(stats.total_bookmarked) || 0,
+      sheetsStarted: parseInt(stats.sheets_started) || 0,
+      recentActivity: recentResult.rows
+    });
+  } catch (error) {
+    console.error('Get user stats error:', error);
+    res.status(500).json({ error: 'Failed to get user statistics' });
+  }
+});
+
 // Get problem by ID
 router.get('/:id', async (req, res) => {
   try {
@@ -312,47 +356,4 @@ router.post('/completion-status', authenticateToken, async (req, res) => {
 });
 
 // Get user's overall completion statistics
-router.get('/my-stats', authenticateToken, async (req, res) => {
-  try {
-    const userId = req.user.id;
-
-    // Get overall completion stats
-    const statsResult = await pool.query(
-      `SELECT 
-         COUNT(DISTINCT pp.problem_id) as total_attempted,
-         COUNT(DISTINCT CASE WHEN pp.status = 'solved' THEN pp.problem_id END) as total_completed,
-         COUNT(DISTINCT CASE WHEN pp.status = 'bookmarked' THEN pp.problem_id END) as total_bookmarked,
-         COUNT(DISTINCT pp.sheet_id) as sheets_started
-       FROM problem_progress pp
-       WHERE pp.user_id = $1`,
-      [userId]
-    );
-
-    // Get recent completions (last 7 days)
-    const recentResult = await pool.query(
-      `SELECT DATE(solved_at) as date, COUNT(*) as count
-       FROM problem_progress
-       WHERE user_id = $1 
-         AND status = 'solved' 
-         AND solved_at >= CURRENT_DATE - INTERVAL '7 days'
-       GROUP BY DATE(solved_at)
-       ORDER BY date DESC`,
-      [userId]
-    );
-
-    const stats = statsResult.rows[0];
-
-    res.json({
-      totalAttempted: parseInt(stats.total_attempted) || 0,
-      totalCompleted: parseInt(stats.total_completed) || 0,
-      totalBookmarked: parseInt(stats.total_bookmarked) || 0,
-      sheetsStarted: parseInt(stats.sheets_started) || 0,
-      recentActivity: recentResult.rows
-    });
-  } catch (error) {
-    console.error('Get user stats error:', error);
-    res.status(500).json({ error: 'Failed to get user statistics' });
-  }
-});
-
 export default router;
