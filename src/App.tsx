@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { UserProvider } from './contexts/UserContext';
@@ -11,6 +10,8 @@ import { Dashboard } from './pages/Dashboard';
 import { Sheets } from './pages/Sheets';
 import { SheetDetail } from './pages/SheetDetail';
 import { Playground } from './pages/Playground';
+import { Interview } from './pages/Interview';
+import { InterviewSession } from './pages/InterviewSession';
 import { Profile } from './pages/Profile';
 import { Unsubscribe } from './pages/Unsubscribe';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -54,6 +55,10 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
+              
+              {/* Interview routes */}
+              <Route path="/interview" element={<Interview />} />
+              <Route path="/interview/session/:sessionId" element={<InterviewSession />} />
               
               {/* Protected user routes */}
               <Route path="/" element={
