@@ -7,6 +7,8 @@ A comprehensive interview preparation platform with DSA practice sheets, live co
 ### 🎯 Core Features
 - **DSA Practice Sheets**: Multiple categorized sheets (Striver, Love Babbar, Custom)
 - **Live Code Execution**: Run code directly in the browser using Piston API
+- **AI-Powered Interviews**: Real-time technical interviews with AI guidance
+- **Text-to-Speech Integration**: AI interviewer responses with professional audio
 - **Progress Tracking**: Track solved problems, streaks, and completion rates
 - **Daily Email Notifications**: Customizable problem recommendations
 - **User Dashboard**: Comprehensive analytics and progress visualization
@@ -28,11 +30,13 @@ A comprehensive interview preparation platform with DSA practice sheets, live co
 ### 💻 Technical Features
 - **Frontend**: React 18, TypeScript, Tailwind CSS
 - **Backend**: Node.js, Express, PostgreSQL
+- **AI Services**: Groq AI for interviews, ElevenLabs for TTS
 - **Authentication**: JWT tokens
 - **Email Service**: Nodemailer with SMTP
 - **Code Execution**: Piston API integration
 - **Database**: PostgreSQL with proper indexing
 - **Security**: Helmet, CORS, Rate limiting
+- **Real-time Communication**: Socket.io for live interviews
 
 ## Quick Start
 

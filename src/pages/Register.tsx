@@ -52,10 +52,10 @@ export const Register: React.FC = () => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Code className="w-10 h-10 text-blue-600" />
-            <h1 className="text-2xl font-bold text-slate-800">InterviewPrep</h1>
+            <h1 className="text-2xl font-bold text-slate-800">PrepAI</h1>
           </div>
           <h2 className="text-xl font-semibold text-slate-700">Create your account</h2>
-          <p className="text-slate-600 mt-2">Start your DSA preparation journey</p>
+          <p className="text-slate-600 mt-2">Start your preparation journey</p>
         </div>
 
         {/* Register Form */}

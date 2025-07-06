@@ -1,29 +1,39 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { Suspense, lazy } from 'react';
 import { UserProvider } from './contexts/UserContext';
 import { ProblemProvider } from './contexts/ProblemContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
-import { Login } from './pages/Login';
-import { Register } from './pages/Register';
-import { Dashboard } from './pages/Dashboard';
-import { Sheets } from './pages/Sheets';
-import { SheetDetail } from './pages/SheetDetail';
-import { Playground } from './pages/Playground';
-import { Profile } from './pages/Profile';
-import { Unsubscribe } from './pages/Unsubscribe';
-import { AdminDashboard } from './pages/admin/AdminDashboard';
-import { AdminUsers } from './pages/admin/AdminUsers';
-import { AdminEmailLogs } from './pages/admin/AdminEmailLogs';
-import { AdminAnalytics } from './pages/admin/AdminAnalytics';
+import { LoadingSpinner } from './components/LoadingSpinner';
+import { ErrorBoundary } from './components/ErrorBoundary';
+
+// Lazy load heavy components
+const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
+const Register = lazy(() => import('./pages/Register').then(module => ({ default: module.Register })));
+const Dashboard = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
+const Sheets = lazy(() => import('./pages/Sheets').then(module => ({ default: module.Sheets })));
+const SheetDetail = lazy(() => import('./pages/SheetDetail').then(module => ({ default: module.SheetDetail })));
+const Playground = lazy(() => import('./pages/Playground').then(module => ({ default: module.Playground })));
+const Interview = lazy(() => import('./pages/Interview').then(module => ({ default: module.Interview })));
+const InterviewSession = lazy(() => import('./pages/InterviewSession').then(module => ({ default: module.InterviewSession })));
+const InterviewReport = lazy(() => import('./pages/InterviewReport'));
+const Profile = lazy(() => import('./pages/Profile').then(module => ({ default: module.Profile })));
+const Unsubscribe = lazy(() => import('./pages/Unsubscribe').then(module => ({ default: module.Unsubscribe })));
+
+// Admin pages - lazy loaded
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers').then(module => ({ default: module.AdminUsers })));
+const AdminEmailLogs = lazy(() => import('./pages/admin/AdminEmailLogs').then(module => ({ default: module.AdminEmailLogs })));
+const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics').then(module => ({ default: module.AdminAnalytics })));
 
 function App() {
   return (
-    <UserProvider>
-      <ProblemProvider>
-        <Router>
-          <div className="App">
+    <ErrorBoundary>
+      <UserProvider>
+        <ProblemProvider>
+          <Router>
+            <div className="App">
             <Toaster 
               position="top-right"
               toastOptions={{
@@ -51,9 +61,38 @@ function App() {
             
             <Routes>
               {/* Public routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/unsubscribe" element={<Unsubscribe />} />
+              <Route path="/login" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Login />
+                </Suspense>
+              } />
+              <Route path="/register" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Register />
+                </Suspense>
+              } />
+              <Route path="/unsubscribe" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Unsubscribe />
+                </Suspense>
+              } />
+              
+              {/* Interview routes */}
+              <Route path="/interview" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Interview />
+                </Suspense>
+              } />
+              <Route path="/interview/session/:sessionId" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <InterviewSession />
+                </Suspense>
+              } />
+              <Route path="/interview/:sessionId/report" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <InterviewReport />
+                </Suspense>
+              } />
               
               {/* Protected user routes */}
               <Route path="/" element={
@@ -61,11 +100,31 @@ function App() {
                   <Layout />
                 </ProtectedRoute>
               }>
-                <Route index element={<Dashboard />} />
-                <Route path="sheets" element={<Sheets />} />
-                <Route path="sheets/:sheetId" element={<SheetDetail />} />
-                <Route path="playground" element={<Playground />} />
-                <Route path="profile" element={<Profile />} />
+                <Route index element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Dashboard />
+                  </Suspense>
+                } />
+                <Route path="sheets" element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Sheets />
+                  </Suspense>
+                } />
+                <Route path="sheets/:sheetId" element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <SheetDetail />
+                  </Suspense>
+                } />
+                <Route path="playground" element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Playground />
+                  </Suspense>
+                } />
+                <Route path="profile" element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Profile />
+                  </Suspense>
+                } />
               </Route>
               
               {/* Protected admin routes */}
@@ -74,16 +133,33 @@ function App() {
                   <Layout isAdmin />
                 </ProtectedRoute>
               }>
-                <Route index element={<AdminDashboard />} />
-                <Route path="users" element={<AdminUsers />} />
-                <Route path="email-logs" element={<AdminEmailLogs />} />
-                <Route path="analytics" element={<AdminAnalytics />} />
+                <Route index element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <AdminDashboard />
+                  </Suspense>
+                } />
+                <Route path="users" element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <AdminUsers />
+                  </Suspense>
+                } />
+                <Route path="email-logs" element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <AdminEmailLogs />
+                  </Suspense>
+                } />
+                <Route path="analytics" element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <AdminAnalytics />
+                  </Suspense>
+                } />
               </Route>
             </Routes>
           </div>
         </Router>
       </ProblemProvider>
     </UserProvider>
+    </ErrorBoundary>
   );
 }
 

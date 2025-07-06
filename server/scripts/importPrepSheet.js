@@ -40,7 +40,7 @@ async function importPrepSheet() {
             // Insert the sheet
             const sheetResult = await client.query(
                 'INSERT INTO sheets (title, description, difficulty, author, is_active, created_at) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id',
-                ['PrepSheet', 'Comprehensive DSA preparation sheet with curated problems from TakeUForward', 'intermediate', 'TakeUForward', true]
+                ['PrepSheet', 'Comprehensive DSA preparation sheet with curated problems', 'intermediate', 'SDE', true]
             );
             
             sheetId = sheetResult.rows[0].id;

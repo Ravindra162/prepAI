@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Play, TrendingUp, Target, Zap, Trophy } from 'lucide-react';
+import { BookOpen, Play, TrendingUp, Target, Zap, Trophy, Bell, Settings } from 'lucide-react';
 import { StatsCard } from '../components/StatsCard';
 import { ProgressChart } from '../components/ProgressChart';
 import { RecentActivity } from '../components/RecentActivity';
+import { NotificationSettings } from '../components/NotificationSettings';
+import { NotificationQuickSettings } from '../components/NotificationQuickSettings';
 import { problemsAPI, progressAPI } from '../services/api';
 import { useUserContext } from '../contexts/UserContext';
 
@@ -36,6 +38,7 @@ export const Dashboard: React.FC = () => {
   const [progressOverview, setProgressOverview] = useState<ProgressOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -73,7 +76,7 @@ export const Dashboard: React.FC = () => {
     : '0 days';
 
   // Calculate recent activity trend
-  const recentProblems = progressOverview?.dailyProgress?.slice(0, 7).reduce((sum, day) => sum + day.problems_solved, 0) || 0;
+  const recentProblems = progressOverview?.dailyProgress?.slice(0, 7).reduce((sum, day) => parseInt(sum) + parseInt(day.problems_solved), 0) || 0;
 
   if (loading) {
     return (
@@ -162,25 +165,44 @@ export const Dashboard: React.FC = () => {
 
         {/* Recent Activity and Stats */}
         <div className="space-y-6">
+          {/* Email Notifications Card */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <Bell className="w-5 h-5 text-blue-600" />
+                <h3 className="text-lg font-semibold text-slate-800">Email Notifications</h3>
+              </div>
+              <button
+                onClick={() => setShowNotificationSettings(!showNotificationSettings)}
+                className="p-1 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-slate-100 transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+            </div>
+            
+            {!showNotificationSettings ? (
+              <NotificationQuickSettings onOpenFull={() => setShowNotificationSettings(true)} />
+            ) : (
+              <div className="space-y-4">
+                <NotificationSettings />
+                <button
+                  onClick={() => setShowNotificationSettings(false)}
+                  className="w-full py-2 px-4 bg-slate-600 text-white text-sm rounded-lg hover:bg-slate-700 transition-colors"
+                >
+                  Close Settings
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* User Summary */}
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-slate-800 mb-4">Your Progress</h3>
+            <h3 className="text-lg font-semibold text-slate-800 mb-4">Recent Activity</h3>
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-slate-600">Total Attempted</span>
-                <span className="font-semibold text-slate-800">{userStats?.totalAttempted || 0}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-600">Total Solved</span>
-                <span className="font-semibold text-green-600">{userStats?.totalCompleted || 0}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-600">Success Rate</span>
-                <span className="font-semibold text-blue-600">{completionPercentage}%</span>
-              </div>
+              
               {progressOverview?.dailyProgress && progressOverview.dailyProgress.length > 0 && (
                 <div className="pt-4 border-t">
-                  <div className="text-sm text-slate-600 mb-2">Recent Activity</div>
+                  <div className="text-sm text-slate-600 mb-2"></div>
                   <div className="grid grid-cols-7 gap-1">
                     {progressOverview.dailyProgress.slice(0, 7).reverse().map((day, index) => (
                       <div
@@ -227,6 +249,27 @@ export const Dashboard: React.FC = () => {
                   <span className="font-medium text-green-800">Open Playground</span>
                 </div>
               </Link>
+              <div className="w-full p-3 rounded-lg bg-purple-50 border border-purple-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    <div>
+                      <span className="font-medium text-purple-800">AI Technical Interview</span>
+                      <p className="text-xs text-purple-600 mt-1">Fill form and start your interview session</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      window.open('/interview', '_blank');
+                    }}
+                    className="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 transition-colors"
+                  >
+                    Start Interview
+                  </button>
+                </div>
+              </div>
               {userStats?.totalCompleted === 0 && (
                 <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-3 rounded-lg border border-purple-200">
                   <div className="flex items-center space-x-2">

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import Editor from '@monaco-editor/react';
 
 interface CodeEditorProps {
@@ -7,10 +7,10 @@ interface CodeEditorProps {
   language: string;
 }
 
-export const CodeEditor: React.FC<CodeEditorProps> = ({ value, onChange, language }) => {
-  const handleEditorChange = (newValue: string | undefined) => {
+export const CodeEditor: React.FC<CodeEditorProps> = memo(({ value, onChange, language }) => {
+  const handleEditorChange = useCallback((newValue: string | undefined) => {
     onChange(newValue || '');
-  };
+  }, [onChange]);
 
   return (
     <div className="h-full border rounded-lg overflow-hidden">
@@ -45,4 +45,4 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ value, onChange, languag
       />
     </div>
   );
-};
+});

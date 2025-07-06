@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://docvault-hzj4.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL ;
 
 // Create axios instance with default config
 const apiClient = axios.create({
@@ -11,7 +11,7 @@ const apiClient = axios.create({
 });
 
 // Add auth token to requests if available
-apiClient.interceptors.request.use((config) => {
+apiClient.interceptors.request.use((config: { headers: { Authorization: string; }; }) => {
   const token = localStorage.getItem('authToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
