@@ -28,6 +28,9 @@ jobs:
             git pull origin feature/interview
 
             echo "🛠️ Building frontend..."
+            export NVM_DIR="$HOME/.nvm"
+            source "$NVM_DIR/nvm.sh"
+            nvm use node
             npm install
             npm run build
 
