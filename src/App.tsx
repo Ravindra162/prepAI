@@ -12,6 +12,7 @@ import { SheetDetail } from './pages/SheetDetail';
 import { Playground } from './pages/Playground';
 import { Interview } from './pages/Interview';
 import { InterviewSession } from './pages/InterviewSession';
+import InterviewReport from './pages/InterviewReport';
 import { Profile } from './pages/Profile';
 import { Unsubscribe } from './pages/Unsubscribe';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -59,6 +60,7 @@ function App() {
               {/* Interview routes */}
               <Route path="/interview" element={<Interview />} />
               <Route path="/interview/session/:sessionId" element={<InterviewSession />} />
+              <Route path="/interview/:sessionId/report" element={<InterviewReport />} />
               
               {/* Protected user routes */}
               <Route path="/" element={

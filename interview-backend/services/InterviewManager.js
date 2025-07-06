@@ -400,6 +400,7 @@ export class InterviewManager {
       messagesExchanged: session.messages?.length || 0,
       candidateProfile: session.aiContext?.candidateProfile,
       finalResults: session.lastExecution?.results,
+      evaluation: session.evaluation, // Add AI evaluation
       startTime: session.startTime,
       endTime: session.endTime
     };

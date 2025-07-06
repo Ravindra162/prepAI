@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useInterview } from '../contexts/InterviewContext';
 import { CheckCircle, Code } from 'lucide-react';
 import { ResizablePanels } from './ResizablePanels';
@@ -7,11 +8,12 @@ import { ResizableVideoChatPanels } from './ResizableVideoChatPanels';
 import { ResizableCodingPanels } from './ResizableCodingPanels';
 import { TimerDisplay } from './TimerDisplay';
 import { VoiceControls } from './VoiceControls';
-import { InterviewEvaluation } from './InterviewEvaluation';
 import { useVoiceQueue } from '../hooks/useVoiceQueue';
 import { memo } from 'react';
 
 export const InterviewSession = memo(function InterviewSession() {
+  const navigate = useNavigate();
+  const { sessionId } = useParams<{ sessionId: string }>();
   const {
     phase,
     candidateInfo,
@@ -22,7 +24,6 @@ export const InterviewSession = memo(function InterviewSession() {
     testResults,
     isExecuting,
     evaluation,
-    interviewDuration,
     interviewStartTime,
     actions,
     INTERVIEW_PHASES
@@ -118,28 +119,33 @@ export const InterviewSession = memo(function InterviewSession() {
     }
   };
 
+  // Redirect to report page when interview is completed
+  useEffect(() => {
+    if (phase === INTERVIEW_PHASES.COMPLETED && evaluation && sessionId) {
+      // Small delay to ensure evaluation is processed
+      setTimeout(() => {
+        navigate(`/interview/${sessionId}/report`);
+      }, 2000);
+    }
+  }, [phase, evaluation, sessionId, navigate, INTERVIEW_PHASES.COMPLETED]);
+
   if (phase === INTERVIEW_PHASES.COMPLETED && evaluation) {
     return (
-      <InterviewEvaluation
-        evaluation={evaluation}
-        candidateInfo={candidateInfo || { name: 'Candidate', email: '' }}
-        sessionSummary={{
-          duration: interviewDuration,
-          problemsSolved: currentProblem ? 1 : 0,
-          codeExecutions: 0, // This would need to be tracked in context
-          hintsUsed: 0, // This would need to be tracked in context
-          testsPassed: testResults?.passedTests || 0,
-          totalTests: testResults?.totalTests || 0
-        }}
-        onStartNewInterview={() => {
-          // This would need to be implemented to reset the interview state
-          window.location.reload();
-        }}
-        onBackToHome={() => {
-          // This would need to navigate back to the home page
-          window.location.href = '/';
-        }}
-      />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+          <CheckCircle className="mx-auto mb-4 text-green-500" size={64} />
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Interview Completed!</h2>
+          <p className="text-gray-600 mb-6">
+            Thank you for your time. Your performance is being evaluated.
+          </p>
+          <div className="animate-pulse">
+            <div className="text-blue-600 mb-2">Redirecting to your report...</div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-blue-600 h-2 rounded-full animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
