@@ -21,7 +21,7 @@ export const Navigation: React.FC = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-2">
             <Code className="w-8 h-8 text-blue-600" />
-            <h1 className="text-xl font-bold text-slate-800">InterviewPrep</h1>
+            <h1 className="text-xl font-bold text-slate-800">PrepAI</h1>
           </div>
           
           <div className="hidden md:flex space-x-8">
