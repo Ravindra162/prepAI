@@ -32,8 +32,8 @@ jobs:
             npm run build
 
             echo "🔁 Rebuilding Docker containers..."
-            docker compose down
-            docker compose up -d --build
+            sudo docker-compose down
+            sudo docker-compose up -d --build
 
             echo "🔄 Reloading Nginx..."
             sudo systemctl reload nginx
