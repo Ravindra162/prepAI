@@ -1,22 +1,22 @@
-# Dockerfile for backend-only deploy
-FROM node:20
-
+# Frontend Build
+FROM node:20 AS builder
 WORKDIR /app
 
-# Copy root package.json (since it includes both frontend + backend deps)
-COPY package.json package-lock.json* ./
+# Copy package files first for better caching
+COPY package*.json ./
 
-# Install only server-related deps
-RUN npm install --omit=dev
+# Install dependencies with legacy peer deps to handle React 19 compatibility
+RUN npm install --legacy-peer-deps
 
-# Copy only server code (not frontend)
-COPY server/ ./server/
+# Copy source code
+COPY . .
 
-# Set environment variable
-ENV NODE_ENV=production
+# Build the application
+RUN npm run build
 
-# Expose the port your server listens on
-EXPOSE 5000
+FROM nginx:alpine
+COPY --from=builder /app/dist /var/www/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Start the server
-CMD ["node", "server/index.js"]
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

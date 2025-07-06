@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+
+  backend:
+    build:
+      context: ./server
+    container_name: backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./.env
+    restart: always
+
+  interview-backend:
+    build:
+      context: ./interview-backend
+    container_name: interview-backend
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./interview-backend/.env
+    restart: always
+
+  edge-tts-service:
+    build:
+      context: ./edge-tts-service
+    container_name: edge-tts-service
+    ports:
+      - "3001:3001"
+    restart: always

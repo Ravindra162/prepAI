@@ -23,8 +23,9 @@ const __dirname = dirname(__filename);
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
+  path: "/socket.io",
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: '*',
     methods: ["GET", "POST"],
     credentials: true
   },
@@ -43,7 +44,7 @@ const groqService = new GroqService(process.env.GROQ_API_KEY, process.env.ELEVEN
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  origin: '*',
   credentials: true
 }));
 

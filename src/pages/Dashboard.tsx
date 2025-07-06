@@ -73,7 +73,7 @@ export const Dashboard: React.FC = () => {
     : '0 days';
 
   // Calculate recent activity trend
-  const recentProblems = progressOverview?.dailyProgress?.slice(0, 7).reduce((sum, day) => sum + day.problems_solved, 0) || 0;
+  const recentProblems = progressOverview?.dailyProgress?.slice(0, 7).reduce((sum, day) => parseInt(sum) + parseInt(day.problems_solved), 0) || 0;
 
   if (loading) {
     return (

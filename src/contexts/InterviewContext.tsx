@@ -171,7 +171,7 @@ export function InterviewProvider({ children, sessionId: initialSessionId }: { c
 
   // Connect to interview backend
   const connectToInterview = () => {
-    const backendUrl = import.meta.env.VITE_INTERVIEW_BACKEND_URL || 'http://localhost:5001';
+    const backendUrl = import.meta.env.BACKENDIP;
     
     // Disconnect existing socket if any
     if (socket) {
@@ -182,15 +182,15 @@ export function InterviewProvider({ children, sessionId: initialSessionId }: { c
     setPhase(INTERVIEW_PHASES.CONNECTING);
     
     const interviewSocket = io(backendUrl, {
-      transports: ['websocket', 'polling'],
-      autoConnect: true,
-      forceNew: true,
-      timeout: 10000,
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000
-    });
-
+  path: "/interview-backend/socket.io", // 👈 crucial fix
+  transports: ['websocket', 'polling'],
+  autoConnect: true,
+  forceNew: true,
+  timeout: 10000,
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000
+});
     interviewSocket.on('connect', () => {
       setIsConnected(true);
       setSocket(interviewSocket);

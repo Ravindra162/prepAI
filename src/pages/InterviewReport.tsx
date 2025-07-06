@@ -24,9 +24,7 @@ interface InterviewSummary {
 async function fetchInterviewSummary(sessionId: string): Promise<InterviewSummary> {
   try {
     // Use environment variable or fallback to localhost
-    const baseUrl = process.env.NODE_ENV === 'production' 
-      ? process.env.REACT_APP_INTERVIEW_API_URL 
-      : 'http://localhost:5001';
+    const baseUrl = import.meta.env.VITE_INTERVIEW_BACKEND_URL
     
     const response = await fetch(`${baseUrl}/api/sessions/${sessionId}`);
     

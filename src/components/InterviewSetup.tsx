@@ -48,7 +48,7 @@ export function InterviewSetup() {
     
     try {
       // Create a session via the backend API
-      const response = await fetch('http://localhost:5001/api/sessions/create', {
+      const response = await fetch(import.meta.env.VITE_INTERVIEW_BACKEND_URL+'api/sessions/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

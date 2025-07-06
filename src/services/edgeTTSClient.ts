@@ -36,7 +36,7 @@ export class EdgeTTSClient {
   private isServiceAvailable: boolean = true;
   private voices: EdgeTTSVoice[] = [];
 
-  constructor(baseUrl: string = 'http://localhost:3001') {
+  constructor(baseUrl: string = `${import.meta.env.VITE_EDGE_TTS_URL}`) {
     this.baseUrl = baseUrl;
     this.checkServiceHealth();
     this.loadVoices();
@@ -55,7 +55,7 @@ export class EdgeTTSClient {
       if (response.ok) {
         const data = await response.json();
         this.isServiceAvailable = data.status === 'OK';
-        console.log(this.isServiceAvailable ? '✅ Edge TTS service is available' : '⚠️ Edge TTS service health check failed');
+        console.log(this.isServiceAvailable ? '✅ EdThis Weekge TTS service is available' : '⚠️ Edge TTS service health check failed');
       } else {
         this.isServiceAvailable = false;
         console.warn('⚠️ Edge TTS service health check failed with status:', response.status);
