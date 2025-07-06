@@ -2,7 +2,7 @@
 
 A comprehensive interview preparation platform with DSA practice sheets, live code execution, and AI-powered features.
 
-## Features
+## Features of InterviewPrep
 
 ### 🎯 Core Features
 - **DSA Practice Sheets**: Multiple categorized sheets (Striver, Love Babbar, Custom)
