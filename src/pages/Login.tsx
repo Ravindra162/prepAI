@@ -45,7 +45,7 @@ export const Login: React.FC = () => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Code className="w-10 h-10 text-blue-600" />
-            <h1 className="text-2xl font-bold text-slate-800">InterviewPrep</h1>
+            <h1 className="text-2xl font-bold text-slate-800">PrepAI</h1>
           </div>
           <h2 className="text-xl font-semibold text-slate-700">Welcome back</h2>
           <p className="text-slate-600 mt-2">Sign in to continue your DSA journey</p>
@@ -115,14 +115,8 @@ export const Login: React.FC = () => {
             </p>
           </div>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-slate-50 rounded-lg">
-            <p className="text-sm font-medium text-slate-700 mb-2">Demo Credentials:</p>
-            <div className="text-sm text-slate-600 space-y-1">
-              <p><strong>Admin:</strong> admin@interviewprep.com / admin123</p>
-              <p><strong>User:</strong> user@example.com / user123</p>
-            </div>
-          </div>
+          
+          
         </div>
       </div>
     </div>

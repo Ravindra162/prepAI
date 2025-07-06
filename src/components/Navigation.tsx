@@ -1,19 +1,29 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Code, Home, BookOpen, Play, User, Bell, LogOut } from 'lucide-react';
+import { Code, Home, BookOpen, Play, User, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { useUserContext } from '../contexts/UserContext';
 
-export const Navigation: React.FC = () => {
+export const Navigation: React.FC = memo(() => {
   const location = useLocation();
   const { user, logout } = useUserContext();
+  const navigate = useNavigate();
 
-  const navItems = [
+  const navItems = useMemo(() => [
     { path: '/', icon: Home, label: 'Dashboard' },
     { path: '/sheets', icon: BookOpen, label: 'DSA Sheets' },
     { path: '/playground', icon: Play, label: 'Playground' },
     { path: '/profile', icon: User, label: 'Profile' },
-  ];
+  ], []);
+
+  const userInitial = useMemo(() => 
+    user?.name.charAt(0).toUpperCase(), [user?.name]
+  );
+
+  const handleLogoClick = () => {
+    navigate('/');
+  };
 
   return (
     <nav className="bg-white shadow-lg border-b border-slate-200">
@@ -21,7 +31,9 @@ export const Navigation: React.FC = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-2">
             <Code className="w-8 h-8 text-blue-600" />
-            <h1 className="text-xl font-bold text-slate-800">PrepAI</h1>
+            <h1
+              onClick={handleLogoClick}
+              className="text-xl font-bold text-slate-800 cursor-pointer">PrepAI</h1>
           </div>
           
           <div className="hidden md:flex space-x-8">
@@ -43,14 +55,10 @@ export const Navigation: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <button className="p-2 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-slate-100 transition-colors">
-              <Bell className="w-5 h-5" />
-            </button>
-            
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-medium">
-                  {user?.name.charAt(0).toUpperCase()}
+                  {userInitial}
                 </span>
               </div>
               <div className="hidden md:block">
@@ -71,4 +79,4 @@ export const Navigation: React.FC = () => {
       </div>
     </nav>
   );
-};
+});
