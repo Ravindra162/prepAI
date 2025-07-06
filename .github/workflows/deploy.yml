@@ -1,0 +1,41 @@
+name: Deploy Interview Backend
+
+on:
+  push:
+    branches:
+      - feature/interview
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: SSH and Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ~/prepai
+            echo "📥 Pulling latest changes..."
+            git fetch origin
+            git checkout feature/interview
+            git pull origin feature/interview
+
+            echo "🛠️ Building frontend..."
+            npm install
+            npm run build
+
+            echo "🔁 Rebuilding Docker containers..."
+            docker compose down
+            docker compose up -d --build
+
+            echo "🔄 Reloading Nginx..."
+            sudo systemctl reload nginx
+
+            echo "✅ Deployment complete."
