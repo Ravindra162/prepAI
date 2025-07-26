@@ -11,7 +11,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "db:migrate": "node server/scripts/migrate.js",
-    "db:seed": "node server/scripts/seed.js"
+    "db:migrate-company": "node server/scripts/migrate-company-fields.js",
+    "db:seed": "node server/scripts/seed.js",
+    "import:prep-sheet": "node server/scripts/importPrepSheet.js",
+    "import:company-sheets": "node server/scripts/importCompanySheet.js"
   },
   "dependencies": {
     "@andresaya/edge-tts": "^1.2.4",

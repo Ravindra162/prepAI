@@ -51,7 +51,7 @@ export const Sheets: React.FC = () => {
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-slate-800">DSA Practice Sheets</h1>
+        <h1 className="text-4xl font-bold text-slate-800">DSA Practice / Company-Wise  Sheets</h1>
         <p className="text-xl text-slate-600">Curated problem sets to master Data Structures & Algorithms</p>
       </div>
 
