@@ -170,6 +170,9 @@ router.get('/:id', async (req, res) => {
     }
 
     // Get problems for this sheet
+    // Use null for user_id if no user is authenticated (public access)
+    const userId = req.user?.id || null;
+    
     const problemsResult = await pool.query(
       `SELECT p.*, 
               COALESCE(pp.status, 'not_started') as user_status,
@@ -178,20 +181,39 @@ router.get('/:id', async (req, res) => {
        LEFT JOIN problem_progress pp ON p.id = pp.problem_id AND pp.user_id = $2
        WHERE p.sheet_id = $1 AND p.is_active = true
        ORDER BY p.step_no, p.sl_no_in_step`,
-      [sheetId, req.user?.id || null]
+      [sheetId, userId]
     );
 
     const sheet = sheetResult.rows[0];
-    const problems = problemsResult.rows.map(problem => ({
-      ...problem,
-      topics: JSON.parse(problem.ques_topic || '[]').map(t => t.label || t.value || t),
-      solved: problem.user_status === 'solved',
-      bookmarked: problem.user_status === 'bookmarked'
-    }));
+    const problems = problemsResult.rows.map(problem => {
+      let topics = [];
+      try {
+        const parsedTopics = JSON.parse(problem.ques_topic || '[]');
+        topics = Array.isArray(parsedTopics) ? parsedTopics.map(t => t.label || t.value || t) : [];
+      } catch (e) {
+        console.warn(`Failed to parse topics for problem ${problem.id}:`, e.message);
+        topics = [];
+      }
+      
+      return {
+        ...problem,
+        topics,
+        solved: problem.user_status === 'solved',
+        bookmarked: problem.user_status === 'bookmarked'
+      };
+    });
+
+    let tags = [];
+    try {
+      tags = JSON.parse(sheet.tags || '[]');
+    } catch (e) {
+      console.warn(`Failed to parse tags for sheet ${sheet.id}:`, e.message);
+      tags = [];
+    }
 
     res.json({
       ...sheet,
-      tags: JSON.parse(sheet.tags || '[]'),
+      tags,
       problems,
       solved: problems.filter(p => p.solved).length
     });

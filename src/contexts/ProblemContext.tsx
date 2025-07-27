@@ -32,6 +32,7 @@ interface Sheet {
   estimatedTime: string;
   author: string;
   tags: string[];
+  problemCount?: number;
 }
 
 interface ProblemContextType {
@@ -50,6 +51,7 @@ interface ProblemContextType {
     tags: string[];
   } | null;
   getSheetById: (id: string) => Sheet | undefined;
+  fetchSheetWithProblems: (id: string) => Promise<Sheet | null>;
   toggleProblemSolved: (sheetId: string, problemId: string) => Promise<void>;
   toggleProblemBookmarked: (sheetId: string, problemId: string) => Promise<void>;
   refreshSheets: (params?: {
@@ -158,6 +160,73 @@ export const ProblemProvider: React.FC<{ children: ReactNode }> = ({ children })
   const getSheetById = (id: string) => {
     return sheets.find(sheet => sheet.id === id);
   };
+
+  const fetchSheetWithProblems = useCallback(async (id: string): Promise<Sheet | null> => {
+    try {
+      const response = await sheetsAPI.getSheetById(id);
+      
+      if (!response) {
+        return null;
+      }
+
+      const sheet = response;
+      const problems = sheet.problems || [];
+
+      const transformedSheet: Sheet = {
+        id: sheet.id,
+        title: sheet.title || 'Untitled Sheet',
+        description: sheet.description || 'No description available',
+        difficulty: sheet.difficulty || 'intermediate',
+        problems: problems.map((problem: any) => ({
+          id: problem.id,
+          step_no: problem.step_no || 1,
+          sl_no_in_step: problem.sl_no_in_step || 1,
+          head_step_no: problem.head_step_no || 'General',
+          title: problem.title,
+          post_link: problem.post_link || '',
+          yt_link: problem.yt_link || '',
+          cs_link: problem.cs_link || '',
+          gfg_link: problem.gfg_link || '',
+          lc_link: problem.lc_link || '',
+          company_tags: problem.company_tags,
+          difficulty: problem.difficulty || 1,
+          ques_topic: problem.ques_topic || '[]',
+          plus_link: problem.plus_link,
+          editorial_link: problem.editorial_link,
+          topics: (() => {
+            try {
+              if (typeof problem.ques_topic === 'string') {
+                const parsed = JSON.parse(problem.ques_topic);
+                return Array.isArray(parsed) ? parsed.map((t: any) => t.label || t.value || t) : [];
+              } else if (Array.isArray(problem.ques_topic)) {
+                return problem.ques_topic.map((t: any) => t.label || t.value || t);
+              }
+              return [];
+            } catch {
+              return [];
+            }
+          })(),
+          solved: problem.solved || problem.user_status === 'solved' || false,
+          bookmarked: problem.bookmarked || problem.user_status === 'bookmarked' || false
+        })),
+        solved: problems.filter((p: any) => p.solved || p.user_status === 'solved').length,
+        estimatedTime: sheet.estimated_time || 'Not specified',
+        author: sheet.author || 'Unknown',
+        tags: Array.isArray(sheet.tags) ? sheet.tags : [],
+        problemCount: problems.length
+      };
+
+      // Update the sheet in the sheets array if it exists
+      setSheets(prevSheets => 
+        prevSheets.map(s => s.id === id ? transformedSheet : s)
+      );
+
+      return transformedSheet;
+    } catch (err) {
+      console.error('Error fetching sheet with problems:', err);
+      return null;
+    }
+  }, []);
 
   const toggleProblemSolved = async (sheetId: string, problemId: string) => {
     try {
@@ -282,6 +351,7 @@ export const ProblemProvider: React.FC<{ children: ReactNode }> = ({ children })
       pagination,
       filters,
       getSheetById,
+      fetchSheetWithProblems,
       toggleProblemSolved,
       toggleProblemBookmarked,
       refreshSheets,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 import { ProblemCard } from '../components/ProblemCard';
@@ -6,10 +6,43 @@ import { useProblemContext } from '../contexts/ProblemContext';
 
 export const SheetDetail: React.FC = () => {
   const { sheetId } = useParams<{ sheetId: string }>();
-  const { getSheetById } = useProblemContext();
+  const { getSheetById, fetchSheetWithProblems } = useProblemContext();
   const [selectedTopic, setSelectedTopic] = useState('all');
+  const [sheet, setSheet] = useState(getSheetById(sheetId || ''));
+  const [loading, setLoading] = useState(false);
 
-  const sheet = getSheetById(sheetId || '');
+  useEffect(() => {
+    const loadSheetData = async () => {
+      if (!sheetId) return;
+      
+      const existingSheet = getSheetById(sheetId);
+      
+      // If sheet exists but has no problems, fetch full data
+      if (!existingSheet || existingSheet.problems.length === 0) {
+        setLoading(true);
+        const fullSheet = await fetchSheetWithProblems(sheetId);
+        if (fullSheet) {
+          setSheet(fullSheet);
+        }
+        setLoading(false);
+      } else {
+        setSheet(existingSheet);
+      }
+    };
+
+    loadSheetData();
+  }, [sheetId, getSheetById, fetchSheetWithProblems]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading sheet details...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!sheet) {
     return (
