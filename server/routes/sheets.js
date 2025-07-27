@@ -5,11 +5,52 @@ import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Get filter options for sheets
+router.get('/filters', async (req, res) => {
+  try {
+    // Get all unique difficulties and tags
+    const result = await pool.query(`
+      SELECT 
+        ARRAY_AGG(DISTINCT difficulty) as difficulties,
+        ARRAY_AGG(DISTINCT tag) as tags
+      FROM (
+        SELECT difficulty, NULL as tag FROM sheets WHERE is_active = true
+        UNION ALL
+        SELECT NULL as difficulty, jsonb_array_elements_text(tags::jsonb) as tag 
+        FROM sheets WHERE is_active = true AND tags IS NOT NULL AND tags != '[]'
+      ) combined
+    `);
+    
+    const difficulties = (result.rows[0].difficulties || []).filter(d => d !== null);
+    const tags = (result.rows[0].tags || []).filter(t => t !== null).sort();
+    
+    res.json({
+      difficulties: difficulties.sort(),
+      tags: tags
+    });
+  } catch (error) {
+    console.error('Get filter options error:', error);
+    res.status(500).json({ error: 'Failed to get filter options' });
+  }
+});
+
 // Get all sheets (public endpoint)
 router.get('/', async (req, res) => {
   try {
-    const { difficulty, search, limit = 20, offset = 0 } = req.query;
+    const { 
+      difficulty, 
+      search, 
+      tags,
+      limit = 20, 
+      offset = 0,
+      page = 1
+    } = req.query;
     
+    // Convert page-based pagination to offset-based
+    const actualLimit = parseInt(limit);
+    const actualOffset = page > 1 ? (parseInt(page) - 1) * actualLimit : parseInt(offset);
+    
+    // Build the main query
     let query = `
       SELECT s.*, 
              COUNT(p.id) as problem_count,
@@ -22,22 +63,64 @@ router.get('/', async (req, res) => {
     const queryParams = [];
     let paramCount = 1;
 
-    if (difficulty) {
+    if (difficulty && difficulty !== 'all') {
       query += ` AND s.difficulty = $${paramCount}`;
       queryParams.push(difficulty);
       paramCount++;
     }
 
-    if (search) {
-      query += ` AND (s.title ILIKE $${paramCount} OR s.description ILIKE $${paramCount})`;
-      queryParams.push(`%${search}%`);
+    if (search && search.trim()) {
+      query += ` AND (s.title ILIKE $${paramCount} OR s.description ILIKE $${paramCount} OR s.author ILIKE $${paramCount})`;
+      queryParams.push(`%${search.trim()}%`);
+      paramCount++;
+    }
+
+    if (tags && tags !== 'all') {
+      query += ` AND s.tags::text ILIKE $${paramCount}`;
+      queryParams.push(`%"${tags}"%`);
       paramCount++;
     }
 
     query += ` GROUP BY s.id ORDER BY s.created_at DESC LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
-    queryParams.push(limit, offset);
+    queryParams.push(actualLimit, actualOffset);
 
-    const result = await pool.query(query, queryParams);
+    // Get total count for pagination
+    let countQuery = `
+      SELECT COUNT(DISTINCT s.id) as total
+      FROM sheets s
+      WHERE s.is_active = true
+    `;
+    
+    const countParams = [];
+    let countParamCount = 1;
+
+    if (difficulty && difficulty !== 'all') {
+      countQuery += ` AND s.difficulty = $${countParamCount}`;
+      countParams.push(difficulty);
+      countParamCount++;
+    }
+
+    if (search && search.trim()) {
+      countQuery += ` AND (s.title ILIKE $${countParamCount} OR s.description ILIKE $${countParamCount} OR s.author ILIKE $${countParamCount})`;
+      countParams.push(`%${search.trim()}%`);
+      countParamCount++;
+    }
+
+    if (tags && tags !== 'all') {
+      countQuery += ` AND s.tags::text ILIKE $${countParamCount}`;
+      countParams.push(`%"${tags}"%`);
+      countParamCount++;
+    }
+
+    // Execute both queries
+    const [result, countResult] = await Promise.all([
+      pool.query(query, queryParams),
+      pool.query(countQuery, countParams)
+    ]);
+    
+    const totalSheets = parseInt(countResult.rows[0].total) || 0;
+    const totalPages = Math.ceil(totalSheets / actualLimit);
+    const currentPage = Math.max(1, parseInt(page));
     
     res.json({
       sheets: result.rows.map(sheet => {
@@ -55,7 +138,15 @@ router.get('/', async (req, res) => {
           problemCount: parseInt(sheet.problem_count) || 0,
           avgDifficulty: parseFloat(sheet.avg_difficulty) || 0
         };
-      })
+      }),
+      pagination: {
+        currentPage,
+        totalPages,
+        totalSheets,
+        limit: actualLimit,
+        hasNext: currentPage < totalPages,
+        hasPrev: currentPage > 1
+      }
     });
   } catch (error) {
     console.error('Get sheets error:', error);

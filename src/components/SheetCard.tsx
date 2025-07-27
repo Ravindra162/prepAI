@@ -12,6 +12,7 @@ interface Sheet {
   estimatedTime: string;
   author: string;
   tags: string[];
+  problemCount?: number; // Add this for when we don't load all problems
 }
 
 interface SheetCardProps {
@@ -19,7 +20,9 @@ interface SheetCardProps {
 }
 
 export const SheetCard: React.FC<SheetCardProps> = ({ sheet }) => {
-  const progressPercentage = (sheet.solved / sheet.problems.length) * 100;
+  // Use problemCount from the sheet data if available, otherwise fall back to problems.length
+  const totalProblems = sheet.problemCount || sheet.problems.length;
+  const progressPercentage = totalProblems > 0 ? (sheet.solved / totalProblems) * 100 : 0;
   
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -49,7 +52,7 @@ export const SheetCard: React.FC<SheetCardProps> = ({ sheet }) => {
       <div className="space-y-3 mb-4">
         <div className="flex items-center justify-between text-sm">
           <span className="text-slate-600">Progress</span>
-          <span className="font-medium text-slate-800">{sheet.solved}/{sheet.problems.length}</span>
+          <span className="font-medium text-slate-800">{sheet.solved}/{totalProblems}</span>
         </div>
         <div className="w-full bg-slate-200 rounded-full h-2">
           <div 
@@ -66,7 +69,7 @@ export const SheetCard: React.FC<SheetCardProps> = ({ sheet }) => {
         </div>
         <div className="flex items-center space-x-1">
           <Target className="w-4 h-4" />
-          <span>{sheet.problems.length} problems</span>
+          <span>{totalProblems} problems</span>
         </div>
       </div>
 
