@@ -104,8 +104,28 @@ export const emailAPI = {
 
 // Sheets API
 export const sheetsAPI = {
-  getAllSheets: async () => {
-    const response = await apiClient.get('/sheets');
+  getAllSheets: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    difficulty?: string;
+    tags?: string;
+  }) => {
+    const queryParams = new URLSearchParams();
+    
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.difficulty) queryParams.append('difficulty', params.difficulty);
+    if (params?.tags) queryParams.append('tags', params.tags);
+    
+    const url = `/sheets${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+  
+  getFilterOptions: async () => {
+    const response = await apiClient.get('/sheets/filters');
     return response.data;
   },
   

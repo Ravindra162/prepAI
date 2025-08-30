@@ -13,7 +13,10 @@
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
     "db:migrate": "node server/scripts/migrate.js",
-    "db:seed": "node server/scripts/seed.js"
+    "db:migrate-company": "node server/scripts/migrate-company-fields.js",
+    "db:seed": "node server/scripts/seed.js",
+    "import:prep-sheet": "node server/scripts/importPrepSheet.js",
+    "import:company-sheets": "node server/scripts/importCompanySheet.js"
   },
   "dependencies": {
     "@andresaya/edge-tts": "^1.2.4",
@@ -50,7 +53,7 @@
     "bcryptjs": "^2.4.3",
     "concurrently": "^8.2.2",
     "cors": "^2.8.5",
-    "csv-parser": "^3.0.0",
+    "csv-parser": "^3.2.0",
     "dotenv": "^16.3.1",
     "eslint": "^9.9.1",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
